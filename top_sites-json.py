@@ -4,6 +4,8 @@
 	dig them, whois them, then use that data to plot their locations on
 	a map """
 
+# map.data.loadGeoJson('http://localhost/top_sites-json.json')
+
 import requests
 from HTMLParser import HTMLParser
 import subprocess
