@@ -7,7 +7,14 @@
     <style type="text/css">
       html { height: 100% }
       body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-      #map-canvas { height: 100% }
+      #map-canvas { margin-left: 20px; margin-top: 20px;}
+	.rcorners2 {
+	    border-radius: 25px;
+	    border: 2px solid; 
+	    padding: 20px; 
+	    width: 600px;
+	    height: 400px; 
+	}
       #drop-container {
         display: none;
         height: 100%;
@@ -38,8 +45,9 @@ var map;
 function initMap() {
   // set up the map
   map = new google.maps.Map(document.getElementById('map-canvas'), {
-    center: new google.maps.LatLng(0, 0),
-    zoom: 2
+    center: new google.maps.LatLng(33, -97),
+	//    zoom: 2
+	zoom:2
   });
 }
 
@@ -152,7 +160,7 @@ var a = {"geometry": {"type": "Point", "coordinates": [42.4880946416498, -71.225
     </script>
   </head>
   <body>
-    <div id="map-canvas"></div>
+    <div id="map-canvas" class="rcorners2"></div>
     <div id="drop-container"><div id="drop-silhouette"></div></div>
   </body>
 </html>
