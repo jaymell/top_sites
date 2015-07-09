@@ -33,11 +33,45 @@ site_list = parser.results
 # strip out newlines ...
 site_list = [ i for i in site_list if i != '\n' ]
 
-ips = []
+ips = [ dig(i) for i in site_list ]
 for i in site_list:
 	ips.extend(dig(i))
 
 # takes a long time:
 address = [ get_address(i) for i in ips ]
+
+iterate through sites:
+	each site is a key:
+		site:
+			ips
+				address
+				latitude
+				longitude
+
+
+	
+
+
+
+from pymongo import MongoClient
+
+MONGODB_HOST = 'localhost'
+MONGODB_PORT = 27017
+DB_NAME = 'top_sites'
+COLLECTION_NAME = 'sites'
+connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
+collection = connection[DB_NAME][COLLECTION_NAME]
+
+###################################################
+software: git, apache, nagios, 
+languages: python, javascript, perl, bash
+frameworks: django, flask
+database: oracle, mysql, mongodb
+
+
+{
+	site: stackoverflow.com
+	address: [ip]
+		latitude
 
 

@@ -137,10 +137,16 @@ if __name__ == '__main__':
 	# declare ip dict to store IPs as they are dug, so they're
 	# not dug twice by different sites:
 	ips = {}
-	site_dict = {}
+	#site_dict = {}
 	geolocator = OpenMapQuest()
+
 	for site in site_list:
-		site_dict[site] = {}
+		# remove slashes from site names:
+		site = site.replace('/','')
+		site_dict = {}
+		site_key = site.replace('.','_')
+		site_dict[site_key] = {}
+
 		for ip in dig(site):
 
 			# avoid digging twice:
@@ -152,13 +158,14 @@ if __name__ == '__main__':
 				latitude, longitude = get_coords(address, geolocator)
 				ips[ip_key] = { 'address': address, 'latitude': latitude, 'longitude': longitude }
 
-			site_dict[site][ip_key] = ips[ip_key]
+			site_dict[site_key][ip_key] = ips[ip_key]
 
 		print('site: %s' % site)
-		pprint.pprint(site_dict[site])	
+		pprint.pprint(site_dict[site_key])	
 		
 		# insert site into db:
-		site_id = collection.insert_one(site_dict[site]).inserted_id
+		#site_id = collection.insert_one(site_dict[site]).inserted_id
+		site_id = collection.insert_one(site_dict).inserted_id
 
 	# this current broken ... need to figuure out how to build
 	# feature list and collection cleanly but don't care right now ...
