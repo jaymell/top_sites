@@ -14,6 +14,7 @@ import re
 import pprint
 from geopy.geocoders import *
 import geojson
+import pycountry
 
 class Site_Parser(HTMLParser):
         def __init__(self):
@@ -41,37 +42,37 @@ def dig(site):
 	cmd='dig %s +short' % site
 	proc=subprocess.Popen(shlex.split(cmd),stdout=subprocess.PIPE)
 	out,err=proc.communicate()
-	# return list of IPs:
-	return out.split()
+	# dig can return cnames, so filter those out 
+	# -- probably should ultimately dig those as well:
+	results = []
+	for line in out.split():
+		# regex match for ip address:
+		match = re.match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',line)
+		if match:
+			results.append(line)	
+	return results
 	
 def get_locale(ip):
 	""" Using whois --- currently leaving out street address and zip
-		code in attempt to improve overall accuracy """
-	#whois 63.96.4.58 | egrep '(^Address|^City|^StateProv|^PostalCode|^Country)'
+		code in attempt to improve overall accuracy , basically this from 
+		command line: """ #whois 63.96.4.58 | egrep '(^City|^StateProv|^Country)'
 	def get_match(element, line):
 		match = re.match('^%s:\s+(.*)' % element, line, re.IGNORECASE)
 		return match.group(1) if match else None
 	cmd='whois %s' % ip
 	proc=subprocess.Popen(shlex.split(cmd),stdout=subprocess.PIPE)
 	out,err=proc.communicate()
-	#address = ''
 	city = ''
 	state = ''
-	#postal = ''
 	country = ''
 	line = out
 	for line in out.split('\n'):	
-		#match = get_match('Address', line)
-		#if match: address = match
 		match = get_match('City', line)
 		if match: city = match
 		match = get_match('StateProv', line)
 		if match: state = match
-		#match = get_match('PostalCode', line)
-		#if match: postal = match
 		match = get_match('Country', line)
 		if match: country = match
-		#return_address = ' '.join((address, city, state, postal, country))
 		return_address = ' '.join((city, state, country))
 	return return_address
 
@@ -129,7 +130,7 @@ if __name__ == '__main__':
 	MONGODB_HOST = 'localhost'
 	MONGODB_PORT = 27017
 	DB_NAME = 'top_sites'
-	COLLECTION_NAME = 'sites'
+	COLLECTION_NAME = 'dcmap'
 	connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
 	collection = connection[DB_NAME][COLLECTION_NAME]
 	
@@ -140,42 +141,43 @@ if __name__ == '__main__':
 	#site_dict = {}
 	geolocator = OpenMapQuest()
 
+	site_json = []
+
 	for site in site_list:
 		# remove slashes from site names:
 		site = site.replace('/','')
 		site_dict = {}
-		site_key = site.replace('.','_')
-		site_dict[site_key] = {}
+		#site_val = site.replace('.','_')
+		site_dict['url'] = site
+		site_dict['ips'] = []
 
 		for ip in dig(site):
-
 			# avoid digging twice:
 			# and check against underscores, not dots, cuz mongo is stupid
-			ip_key = ip.replace('.','_')
+			#ip_key = ip.replace('.','_')
 
-			if ip_key not in ips: 
+			if ip not in ips: 
 				address = get_locale(ip)
+				# get country from address:
+				try:
+                                        # make uppercase:
+                                        two_letter = address.split()[-1].upper()
+                                except Exception as e:
+                                        print('FAILED: ',e,address)
+                                else:
+                                        country = pycountry.countries.get(alpha2=two_letter)
+                                        three_letter = country.alpha3
+                                        country = three_letter
 				latitude, longitude = get_coords(address, geolocator)
-				ips[ip_key] = { 'address': address, 'latitude': latitude, 'longitude': longitude }
+				ip_dict = {'ip': ip, 'country': country, 'address': address, 'latitude': latitude, 'longitude': longitude } 
+				site_dict['ips'].append(ip_dict)
+				ips[ip] = ip_dict
+			else:
+				site_dict['ips'].append(ips[ip])
 
-			site_dict[site_key][ip_key] = ips[ip_key]
-
-		print('site: %s' % site)
-		pprint.pprint(site_dict[site_key])	
+		pprint.pprint(site_dict)	
 		
 		# insert site into db:
 		#site_id = collection.insert_one(site_dict[site]).inserted_id
 		site_id = collection.insert_one(site_dict).inserted_id
 
-	# this current broken ... need to figuure out how to build
-	# feature list and collection cleanly but don't care right now ...
-	# not sure I structured the geojson properly in the first place:
-	"""
-	feature_list = [ get_geojson_feature(i) for i in site_dict ]	
-	# get geojson data from site_list:
-	feature_collection = geojson.FeatureCollection(feature_list)
-	# write to file:
-	out_file = './top_sites-json.json'
-	with open(out_file, 'w') as f:
-		geojson.dump(feature_collection, f)
-	"""
