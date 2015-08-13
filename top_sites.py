@@ -37,19 +37,27 @@ class Site_Parser(HTMLParser):
 			self.tr_match = False
 			self.td_count = 0
 
-def dig(site):
-	""" dig it """
+def dig(site, results=None):
+	""" dig it 
+		--- results must initially be defined
+		as None, not empty list; the latter will
+		create weirdness -- look at this:
+		https://pythonconquerstheuniverse.wordpress.com/2012/02/15/mutable-default-arguments/
+	"""
 	cmd='dig %s +short' % site
 	proc=subprocess.Popen(shlex.split(cmd),stdout=subprocess.PIPE)
 	out,err=proc.communicate()
-	# dig can return cnames, so filter those out 
-	# -- probably should ultimately dig those as well:
-	results = []
+	if not results: results = []
 	for line in out.split():
 		# regex match for ip address:
 		match = re.match('^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',line)
 		if match:
 			results.append(line)	
+		else: 
+			""" If not an IP address, assume it's a CNAME
+				and call function recursively """
+			#dig(line, results)
+			pass
 	return results
 	
 def get_locale(ip):
@@ -130,7 +138,7 @@ if __name__ == '__main__':
 	MONGODB_HOST = 'localhost'
 	MONGODB_PORT = 27017
 	DB_NAME = 'top_sites'
-	COLLECTION_NAME = 'dcmap'
+	COLLECTION_NAME = 'top_sites_new'
 	connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
 	collection = connection[DB_NAME][COLLECTION_NAME]
 	
