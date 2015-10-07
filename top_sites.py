@@ -59,7 +59,7 @@ def dig(site, results=None):
 def get_locale(ip):
 	""" Using whois --- currently leaving out street address and zip
 		code in attempt to improve overall accuracy , basically this from 
-		command line: """ #whois 63.96.4.58 | egrep '(^City|^StateProv|^Country)'
+		command line: whois 63.96.4.58 | egrep '(^City|^StateProv|^Country)' """
 	def get_match(element, line):
 		match = re.match('^%s:\s+(.*)' % element, line, re.IGNORECASE)
 		return match.group(1) if match else None
