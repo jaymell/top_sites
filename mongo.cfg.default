@@ -1,0 +1,5 @@
+[DB]
+#MONGODB_HOST=localhost
+#MONGODB_PORT=27017
+#DB_NAME=top_sites
+#COLLECTION_NAME=top_sites

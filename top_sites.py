@@ -91,7 +91,7 @@ def get_coords(address, geolocator):
 		latitude = location.latitude
 		longitude = location.longitude
 	except Exception as e:
-		#print('Failed to get geolocation for %s\n\terror: %s' % (address, e))
+		print('Failed to get geolocation for %s\n\terror: %s' % (address, e))
 		return (None, None)
 	else:
 		return(latitude, longitude)
@@ -118,31 +118,43 @@ def get_geojson_features(site):
 if __name__ == '__main__':
 	
 	import pprint
+	import ConfigParser
 	from pymongo import MongoClient
-
+	
 	site = 'http://en.wikipedia.org/wiki/List_of_most_popular_websites'
 	site = get_site(site)
 		
-	parser = Site_Parser()
-	parser.feed(site)
+	site_parser = Site_Parser()
+	site_parser.feed(site)
 	# save results to list and strip out newlines ...
-	site_list = [ i for i in parser.results if i != '\n' ]
+	site_list = [ i for i in site_parser.results if i != '\n' ]
 			
-	# db stuff -- create following automagic if they don't 
-	# already exist:
-	MONGODB_HOST = 'localhost'
-	MONGODB_PORT = 27017
-	DB_NAME = 'top_sites'
-	COLLECTION_NAME = 'top_sites_new'
-	connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
-	collection = connection[DB_NAME][COLLECTION_NAME]
+	# source db config from external file:
+	config = 'mongo.cfg'
+	defaults = {'MONGODB_HOST': 'localhost', 'MONGODB_PORT': '27017', 'DB_NAME': 'top_sites', 'COLLECTION_NAME': 'top_sites'}
+	config_parser = ConfigParser.SafeConfigParser(defaults)
+	config_parser.read(config)
+
+	try:
+		MONGODB_HOST = config_parser.get('DB', 'MONGODB_HOST')
+		MONGODB_PORT = int(config_parser.get('DB', 'MONGODB_PORT'))
+		DB_NAME = config_parser.get('DB', 'DB_NAME')
+		COLLECTION_NAME = config_parser.get('DB', 'COLLECTION_NAME')
+	except Exception as e:
+		print('Error assigning DB variables: %s' % e)
+		exit(1)
+	else:
+		connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
+		collection = connection[DB_NAME][COLLECTION_NAME]
 	
 
 	# declare ip dict to store IPs as they are dug, so they're
 	# not dug twice by different sites:
 	ips = {}
-	#site_dict = {}
-	geolocator = OpenMapQuest()
+
+	# OpenMapQuest() returning 403 Forbidden
+	#geolocator = OpenMapQuest()
+	geolocator = Nominatim()
 
 	site_json = []
 
@@ -150,7 +162,6 @@ if __name__ == '__main__':
 		# remove slashes from site names:
 		site = site.replace('/','')
 		site_dict = {}
-		#site_val = site.replace('.','_')
 		site_dict['url'] = site
 		site_dict['ips'] = []
 
@@ -178,6 +189,8 @@ if __name__ == '__main__':
 		pprint.pprint(site_dict)	
 		
 		# insert site into db:
-		#site_id = collection.insert_one(site_dict[site]).inserted_id
-		site_id = collection.insert_one(site_dict).inserted_id
+		try:
+			site_id = collection.insert_one(site_dict).inserted_id
+		except Exception as e:
+			print('Failed to write to database: %s \n\t Entry: %s' % (e,site_dict))	
 
