@@ -38,12 +38,8 @@ class Site_Parser(HTMLParser):
 			self.td_count = 0
 
 def dig(site, results=None):
-	""" dig it 
-		--- results must initially be defined
-		as None, not empty list; the latter will
-		create weirdness -- look at this:
-		https://pythonconquerstheuniverse.wordpress.com/2012/02/15/mutable-default-arguments/
-	"""
+	""" dig it """
+
 	cmd='dig %s +short' % site
 	proc=subprocess.Popen(shlex.split(cmd),stdout=subprocess.PIPE)
 	out,err=proc.communicate()
@@ -86,7 +82,7 @@ def get_locale(ip):
 
 def get_coords(address, geolocator):
 	""" use geolocator to get coordinates from address
-		--- needs to be significantl redesigned to:
+		--- potential redesign to:
 		1) consult multiple geolocators, randomly?
 		2) reconcile potential diffs between them
 	 """
@@ -112,7 +108,6 @@ def get_geojson_features(site):
 	feature_list = []
 	for ip in site:
 		if site[ip]['latitude'] and site[ip]['longitude']:
-			# still not sure why google wants long/lat in the order that it does:
 			feature = geojson.Feature(geometry=geojson.Point((site[ip]['longitude'],site[ip]['latitude'])), properties={'site': site}) 
 			feature_list.append(feature)
 			feature_collection = geojson.FeatureCollection(feature_list)
@@ -161,9 +156,6 @@ if __name__ == '__main__':
 
 		for ip in dig(site):
 			# avoid digging twice:
-			# and check against underscores, not dots, cuz mongo is stupid
-			#ip_key = ip.replace('.','_')
-
 			if ip not in ips: 
 				address = get_locale(ip)
 				# get country from address:
