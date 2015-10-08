@@ -9,7 +9,9 @@ locales to coordinates.
 Primary goal is to build an IP geolocation dataset for visualization with Google Maps / d3.js
 
 ## Dependencies
-See requirements.txt -- use 'pip install -r requirements.txt' to install them
+* Python modules -- see requirements.txt -- use 'pip install -r requirements.txt' to install them
+* 'dig' and 'whois' command line utils
+* Access to a mongo DB server -- specify connection details in 'mongo.cfg'
 
 ## Future improvements
 1. Alternative implementations for geolocating:
