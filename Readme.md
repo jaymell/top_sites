@@ -16,7 +16,9 @@ Primary goal is to build an IP geolocation dataset for visualization with Google
 ## Future improvements
 1. Alternative implementations for geolocating:
   * cycle through alternative geocoders if no results found on the default
-  * use paid service -- e.g., https://www.maxmind.com/en/geoip2-precision-services
+  * maxmind offers free and paid services:
+    * paid: https://www.maxmind.com/en/geoip2-precision-services
+    * free: http://dev.maxmind.com/geoip/
 2. More up-to-date source for top websites, e.g., http://www.alexa.com/topsites, this would 
 allow for time dimension as the list changes
 
